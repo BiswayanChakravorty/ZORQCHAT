@@ -1,0 +1,2 @@
+import Link from "next/link"; import type {PromptItem} from "@/lib/catalog";
+export default function CatalogCard({item}:{item:PromptItem}){return <Link href={`/prompt/${item.id}`} className="card"><img className="cardImage" src={item.imageUrl} alt={item.title} loading="lazy"/><div className="cardBody"><div className="cardTitle">{item.title}</div><div className="meta"><span>ZORD ✓</span><span>{item.model}</span></div></div></Link>}
