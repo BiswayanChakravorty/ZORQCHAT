@@ -8,3 +8,9 @@ create policy "public profiles" on public.profiles for select using(true);create
 
 create or replace function public.handle_new_user() returns trigger language plpgsql security definer set search_path=public as $$ begin insert into public.profiles(id,username,display_name) values(new.id,split_part(new.email,'@',1),coalesce(new.raw_user_meta_data->>'display_name',split_part(new.email,'@',1))) on conflict(id) do nothing; return new; end; $$;
 drop trigger if exists on_auth_user_created on auth.users;create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
+
+-- Public ZORD creation assets. Store files in Storage, not in Postgres rows.
+insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('zord-public','zord-public',true,6291456,array['image/png','image/jpeg','image/webp']) on conflict(id) do nothing;
+drop policy if exists "zord public images" on storage.objects;create policy "zord public images" on storage.objects for select to public using(bucket_id='zord-public');
+drop policy if exists "zord authenticated uploads" on storage.objects;create policy "zord authenticated uploads" on storage.objects for insert to authenticated with check(bucket_id='zord-public' and (storage.foldername(name))[1]=(select auth.uid()::text));
+drop policy if exists "zord own image delete" on storage.objects;create policy "zord own image delete" on storage.objects for delete to authenticated using(bucket_id='zord-public' and owner_id=(select auth.uid()::text));
