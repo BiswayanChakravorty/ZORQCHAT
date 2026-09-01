@@ -1,0 +1,2 @@
+import Header from "@/components/Header";import CatalogCard from "@/components/CatalogCard";import {catalog} from "@/lib/catalog";
+export default function Feed(){return <><Header/><main className="container section"><div className="eyebrow">COMMUNITY</div><div className="sectionHead"><h2>Trending on ZORD</h2></div><div className="grid">{catalog.slice(20,32).map(x=><CatalogCard key={x.id} item={x}/>)}</div></main></>}
