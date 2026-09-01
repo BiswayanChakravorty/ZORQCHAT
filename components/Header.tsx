@@ -1,0 +1,2 @@
+import Link from "next/link";
+export default function Header(){return <header className="nav"><div className="container" style={{display:"flex",alignItems:"center",justifyContent:"space-between",width:"100%"}}><Link href="/" className="brand">ZORD</Link><nav className="navlinks"><Link href="/explore">Explore</Link><Link href="/create">Create</Link><Link href="/feed">Trending</Link></nav><div className="actions"><Link className="btn secondary" href="/login">Log in</Link><Link className="btn primary" href="/login">Join ZORD</Link></div></div></header>}
