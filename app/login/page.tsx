@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { supabaseBrowser } from "@/lib/supabase";
@@ -15,6 +15,25 @@ export default function Login() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const supabase = supabaseBrowser();
+    if (!supabase) return;
+
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (active && data.session) router.replace("/explore");
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (active && session) router.replace("/explore");
+    });
+
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, [router]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +58,7 @@ export default function Login() {
       if (error) {
         setError(error.message);
       } else {
-        // Confirm Email must be disabled in Supabase for this to log in immediately.
-        router.push("/create");
+        router.replace("/explore");
       }
     } else if (forgot) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -55,7 +73,7 @@ export default function Login() {
       if (error) {
         setError("Incorrect email or password. Use ‘Forgot password?’ if you need email recovery.");
       } else {
-        router.push("/create");
+        router.replace("/explore");
       }
     }
 
@@ -78,7 +96,7 @@ export default function Login() {
             {signup ? "JOIN ZORD" : forgot ? "ACCOUNT RECOVERY" : "WELCOME BACK"}
           </div>
           <h1 style={{ fontFamily: "Space Grotesk", fontSize: 36, letterSpacing: -1.5 }}>
-            {signup ? "Create your ZORD profile" : forgot ? "Recover your account" : "Log in to create"}
+            {signup ? "Create your ZORD profile" : forgot ? "Recover your account" : "Log in to ZORD"}
           </h1>
 
           <form className="form" onSubmit={submit}>
