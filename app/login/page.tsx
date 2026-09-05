@@ -22,11 +22,11 @@ export default function Login() {
 
     let active = true;
     supabase.auth.getSession().then(({ data }) => {
-      if (active && data.session) router.replace("/explore");
+      if (active && data.session) window.location.replace("/explore");
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (active && session) router.replace("/explore");
+      if (active && session) window.location.replace("/explore");
     });
 
     return () => {
@@ -34,6 +34,17 @@ export default function Login() {
       listener.subscription.unsubscribe();
     };
   }, [router]);
+
+  const goToExplore = async (supabase: ReturnType<typeof supabaseBrowser>) => {
+    if (!supabase) return false;
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) {
+      setError("Login succeeded, but the session was not saved. Please try again.");
+      return false;
+    }
+    window.location.replace("/explore");
+    return true;
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +60,7 @@ export default function Login() {
     }
 
     if (signup) {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { data: { display_name: name } },
@@ -57,8 +68,10 @@ export default function Login() {
 
       if (error) {
         setError(error.message);
+      } else if (!data.session) {
+        setError("Account created, but no login session was returned. Turn off Confirm Email in Supabase Authentication → Providers → Email.");
       } else {
-        router.replace("/explore");
+        await goToExplore(supabase);
       }
     } else if (forgot) {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -73,7 +86,7 @@ export default function Login() {
       if (error) {
         setError("Incorrect email or password. Use ‘Forgot password?’ if you need email recovery.");
       } else {
-        router.replace("/explore");
+        await goToExplore(supabase);
       }
     }
 
