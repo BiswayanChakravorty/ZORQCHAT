@@ -60,15 +60,37 @@ export default function ResetPassword() {
 
     setLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
-    setLoading(false);
 
     if (error) {
+      setLoading(false);
       setError(error.message);
       return;
     }
 
+    const { data: userData } = await supabase.auth.getUser();
+    const recoveredEmail = userData.user?.email;
+
+    if (!recoveredEmail) {
+      setLoading(false);
+      setError("Password changed, but we could not restore the session. Please log in again.");
+      return;
+    }
+
+    await supabase.auth.signOut();
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: recoveredEmail,
+      password,
+    });
+
+    setLoading(false);
+
+    if (signInError) {
+      setError("Password changed. Please log in again with your new password.");
+      return;
+    }
+
     setMessage("Password updated. You are ready to go.");
-    setTimeout(() => router.push("/create"), 700);
+    setTimeout(() => router.push("/create"), 500);
   };
 
   return (
